@@ -1,0 +1,32 @@
+{
+  "name": "consumed",
+  "version": "0.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "node scripts/dev.mjs",
+    "build": "npm run build --workspace @consumed/contract && npm run build --workspace @consumed/web && npm run build --workspace @consumed/desktop",
+    "test": "npm run test --workspace @consumed/contract && npm run test --workspace @consumed/desktop && npm run test --workspace @consumed/web",
+    "test:coverage": "npm run test --workspaces --if-present -- --coverage",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "e2e": "npm run build && playwright test",
+    "package": "npm run build && npm run package --workspace @consumed/desktop",
+    "make": "npm run package"
+  },
+  "devDependencies": {
+    "@eslint/js": "9.39.5",
+    "@playwright/test": "1.65.0",
+    "@vitest/coverage-v8": "5.1.0",
+    "angular-eslint": "22.6.0",
+    "eslint": "9.39.5",
+    "eslint-config-prettier": "10.1.8",
+    "prettier": "3.9.10",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.72.2"
+  }
+}
