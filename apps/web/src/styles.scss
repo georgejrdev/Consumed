@@ -1,0 +1,36 @@
+:root {
+  --bg: #14181c;
+  --surface: #121416;
+  --chrome: #0f1011;
+  --border: #aeaeae;
+  --accent: #ffe681;
+  --text: #ffffff;
+  --text-muted: #c7c7c7;
+  --text-dim: #d9d9d9;
+  --rating: #18831c;
+  --danger: #b3261e;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: Roboto, system-ui, sans-serif;
+  min-height: 100vh;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}

@@ -1,0 +1,41 @@
+<section class="library">
+  <h1>{{ heading() }}</h1>
+
+  <div class="toolbar">
+    <div class="search">
+      <input
+        type="search"
+        placeholder="BUSCAR"
+        aria-label="Buscar por título, autor, editora ou direção"
+        [value]="query()"
+        (input)="onSearch($event)"
+      />
+      <svg class="search-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" stroke-width="2" />
+        <line x1="15.5" y1="15.5" x2="21" y2="21" stroke="currentColor" stroke-width="2" />
+      </svg>
+    </div>
+    <button type="button" class="add" (click)="openForm()">+ Adicionar</button>
+  </div>
+
+  @if (loading()) {
+  <p class="state">Carregando…</p>
+  } @else if (error(); as message) {
+  <p class="state error" role="alert">{{ message }}</p>
+  } @else if (items().length === 0) {
+  <p class="state">{{ emptyMessage() }}</p>
+  } @else {
+  <div class="grid">
+    @for (item of items(); track item.id) {
+    <app-item-card [item]="item" />
+    }
+  </div>
+  } @if (formOpen()) {
+  <app-item-form-dialog
+    [item]="null"
+    [defaultType]="type()"
+    (saved)="onSaved()"
+    (closed)="formOpen.set(false)"
+  />
+  }
+</section>

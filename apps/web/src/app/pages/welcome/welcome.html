@@ -1,0 +1,13 @@
+<section class="welcome" aria-labelledby="welcome-title">
+  <h1 id="welcome-title">Bem-vindo ao Consumed</h1>
+  <p>
+    Escolha a pasta do cofre. É onde ficam o banco <code>consumed.db</code> e as imagens dos seus
+    filmes e livros.
+  </p>
+  <button type="button" class="primary" (click)="choose()" [disabled]="busy()">
+    {{ busy() ? 'Abrindo…' : 'Escolher pasta do cofre' }}
+  </button>
+  @if (error(); as message) {
+  <p class="error" role="alert">{{ message }}</p>
+  }
+</section>

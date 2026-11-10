@@ -1,0 +1,42 @@
+<div class="tag-field">
+  <label [for]="inputId()">{{ label() }}</label>
+
+  @if (values().length > 0) {
+  <ul class="chips">
+    @for (value of values(); track $index) {
+    <li class="chip">
+      <span class="chip-label">{{ value }}</span>
+      @if (!disabled()) {
+      <button
+        type="button"
+        class="chip-remove"
+        [attr.aria-label]="'Remover ' + value"
+        (click)="removeAt($index)"
+      >
+        ×
+      </button>
+      }
+    </li>
+    }
+  </ul>
+  }
+
+  <input
+    [id]="inputId()"
+    type="text"
+    autocomplete="off"
+    [attr.list]="listId()"
+    [placeholder]="placeholder()"
+    [value]="draft()"
+    [disabled]="disabled()"
+    (input)="onInput($event)"
+    (keydown)="onKeydown($event)"
+    (blur)="onBlur()"
+  />
+
+  <datalist [id]="listId()">
+    @for (suggestion of suggestions(); track suggestion) {
+    <option [value]="suggestion"></option>
+    }
+  </datalist>
+</div>

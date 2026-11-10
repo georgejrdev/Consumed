@@ -1,0 +1,116 @@
+@if (loading()) {
+<p class="state">Carregando…</p>
+} @else if (error(); as message) {
+<p class="state error" role="alert">{{ message }}</p>
+<div class="actions">
+  <button type="button" class="secondary" (click)="goBack()">Voltar</button>
+</div>
+} @else if (item(); as data) {
+<article class="detail">
+  <div class="main">
+    <div
+      class="cover"
+      [class.nao-lido]="data.reading_status === 'nao_lido'"
+      [class.lendo]="data.reading_status === 'lendo'"
+    >
+      @if (imageUrl(); as src) { @if (broken()) {
+      <div class="placeholder" aria-hidden="true">{{ initial() }}</div>
+      } @else {
+      <img [src]="src" [alt]="'Capa de ' + data.title" (error)="broken.set(true)" />
+      } } @else {
+      <div class="placeholder" aria-hidden="true">{{ initial() }}</div>
+      }
+    </div>
+
+    <div class="info">
+      <h1>
+        {{ data.title }} @if (data.year !== undefined) {
+        <span class="year">({{ data.year }})</span>
+        }
+      </h1>
+
+      @if (metaRows().length > 0) {
+      <div class="meta">
+        @for (row of metaRows(); track row.label) {
+        <p class="meta-row">
+          <span class="meta-label">{{ row.label }}</span>
+          <span class="meta-value">{{ row.value }}</span>
+        </p>
+        }
+      </div>
+      }
+
+      <div class="rating-row">
+        <div class="rating">{{ formatRating(data.rating) }}</div>
+
+        <div class="dates">
+          @if (data.type === 'filme') {
+          <p class="meta-row">
+            <span class="meta-label">Assistido em:</span>
+            <span class="meta-value">{{ formatDate(data.consumed_on) }}</span>
+          </p>
+          } @else { @if (data.started_on) {
+          <p class="meta-row">
+            <span class="meta-label">Início da leitura:</span>
+            <span class="meta-value">{{ formatDate(data.started_on) }}</span>
+          </p>
+          } @if (data.finished_on) {
+          <p class="meta-row">
+            <span class="meta-label">Fim da leitura:</span>
+            <span class="meta-value">{{ formatDate(data.finished_on) }}</span>
+          </p>
+          } }
+        </div>
+      </div>
+
+      <div class="actions">
+        <button type="button" class="secondary" (click)="goBack()">Voltar</button>
+        <button type="button" class="secondary" (click)="openForm()">Editar</button>
+        <button type="button" class="danger" (click)="openConfirm()">Excluir</button>
+      </div>
+    </div>
+  </div>
+
+  @if (data.notes) {
+  <p class="notes">{{ data.notes }}</p>
+  }
+</article>
+
+@if (formOpen()) {
+<app-item-form-dialog
+  [item]="data"
+  [defaultType]="data.type"
+  (saved)="onSaved()"
+  (closed)="formOpen.set(false)"
+/>
+}
+
+<dialog
+  #confirmDialog
+  class="confirm"
+  aria-labelledby="confirm-text"
+  (cancel)="onConfirmCancel($event)"
+>
+  <p id="confirm-text" class="confirm-text">
+    Excluir "{{ data.title }}"? Essa ação não pode ser desfeita.
+  </p>
+
+  @if (deleteError(); as message) {
+  <p class="confirm-error" role="alert">{{ message }}</p>
+  }
+
+  <div class="confirm-actions">
+    <button #confirmCancel type="button" class="secondary" (click)="closeConfirm()">
+      Cancelar
+    </button>
+    <button type="button" class="danger" [disabled]="deleting()" (click)="confirmDelete()">
+      {{ deleting() ? 'Excluindo…' : 'Excluir' }}
+    </button>
+  </div>
+</dialog>
+} @else {
+<p class="state">Item não encontrado.</p>
+<div class="actions">
+  <button type="button" class="secondary" (click)="goBack()">Voltar</button>
+</div>
+}

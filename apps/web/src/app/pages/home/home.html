@@ -1,0 +1,50 @@
+<div class="home">
+  <div class="actions">
+    <button type="button" class="add" (click)="openForm()">+ Adicionar</button>
+  </div>
+
+  <section class="shelf" aria-labelledby="films-title">
+    <h2 id="films-title">ÚLTIMOS 5 FILMES ASSISTIDOS</h2>
+
+    @if (loading()) {
+    <p class="state">Carregando…</p>
+    } @else if (filmsError(); as message) {
+    <p class="state error" role="alert">{{ message }}</p>
+    } @else if (films().length === 0) {
+    <p class="state">Nenhum filme registrado ainda.</p>
+    } @else {
+    <div class="row">
+      @for (film of films(); track film.id) {
+      <app-item-card size="small" [item]="film" />
+      }
+    </div>
+    }
+  </section>
+
+  <section class="shelf" aria-labelledby="books-title">
+    <h2 id="books-title">ÚLTIMOS 5 LIVROS LIDOS</h2>
+
+    @if (loading()) {
+    <p class="state">Carregando…</p>
+    } @else if (booksError(); as message) {
+    <p class="state error" role="alert">{{ message }}</p>
+    } @else if (books().length === 0) {
+    <p class="state">Nenhum livro registrado ainda.</p>
+    } @else {
+    <div class="row">
+      @for (book of books(); track book.id) {
+      <app-item-card size="small" [item]="book" />
+      }
+    </div>
+    }
+  </section>
+
+  @if (formOpen()) {
+  <app-item-form-dialog
+    [item]="null"
+    defaultType="filme"
+    (saved)="onSaved()"
+    (closed)="formOpen.set(false)"
+  />
+  }
+</div>

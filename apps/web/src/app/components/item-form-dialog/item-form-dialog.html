@@ -1,0 +1,374 @@
+<dialog #dialog class="dialog" (cancel)="onCancel($event)">
+  <form class="form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    <header class="header">
+      <h2>{{ dialogTitle() }}</h2>
+    </header>
+
+    <div class="body">
+      @if (summary().length > 0) {
+      <div class="summary" role="alert">
+        <p>Não foi possível salvar:</p>
+        <ul>
+          @for (message of summary(); track $index) {
+          <li>{{ message }}</li>
+          }
+        </ul>
+      </div>
+      }
+
+      <div class="columns">
+        <div class="field">
+          <label for="item-type">Tipo</label>
+          <select
+            id="item-type"
+            name="type"
+            formControlName="type"
+            autocomplete="off"
+            [attr.aria-describedby]="fieldError('type') ? 'item-type-error' : null"
+          >
+            <option value="filme">Filme</option>
+            <option value="livro">Livro</option>
+          </select>
+          @if (fieldError('type'); as message) {
+          <p class="field-error" id="item-type-error">{{ message }}</p>
+          }
+        </div>
+
+        <div class="field">
+          <label for="item-title">Título</label>
+          <input
+            id="item-title"
+            name="title"
+            type="text"
+            formControlName="title"
+            autocomplete="off"
+            required
+            [attr.aria-describedby]="fieldError('title') ? 'item-title-error' : null"
+          />
+          @if (fieldError('title'); as message) {
+          <p class="field-error" id="item-title-error">{{ message }}</p>
+          }
+        </div>
+
+        @if (typeValue() === 'filme') {
+        <div class="field">
+          <label for="item-consumed-on">Data de consumo</label>
+          <input
+            id="item-consumed-on"
+            name="consumed_on"
+            type="date"
+            formControlName="consumed_on"
+            autocomplete="off"
+            required
+            [attr.aria-describedby]="fieldError('consumed_on') ? 'item-consumed-on-error' : null"
+          />
+          @if (fieldError('consumed_on'); as message) {
+          <p class="field-error" id="item-consumed-on-error">{{ message }}</p>
+          }
+        </div>
+        }
+
+        <div class="field">
+          <label for="item-year">Ano</label>
+          <input
+            id="item-year"
+            name="year"
+            type="number"
+            min="1"
+            formControlName="year"
+            autocomplete="off"
+            [attr.aria-describedby]="fieldError('year') ? 'item-year-error' : null"
+          />
+          @if (fieldError('year'); as message) {
+          <p class="field-error" id="item-year-error">{{ message }}</p>
+          }
+        </div>
+
+        <div class="field">
+          <label for="item-rating">Nota</label>
+          <select
+            id="item-rating"
+            name="rating"
+            formControlName="rating"
+            autocomplete="off"
+            [attr.aria-describedby]="fieldError('rating') ? 'item-rating-error' : null"
+          >
+            <option value="">Sem nota</option>
+            @for (rating of ratings; track rating) {
+            <option [value]="rating">{{ rating }}</option>
+            }
+          </select>
+          @if (fieldError('rating'); as message) {
+          <p class="field-error" id="item-rating-error">{{ message }}</p>
+          }
+        </div>
+
+        <div class="field">
+          <label for="item-language">Idioma</label>
+          <input
+            id="item-language"
+            name="language"
+            type="text"
+            formControlName="language"
+            autocomplete="off"
+            list="item-language-suggestions"
+            [attr.aria-describedby]="fieldError('language') ? 'item-language-error' : null"
+          />
+          <datalist id="item-language-suggestions">
+            @for (value of suggestions().languages; track value) {
+            <option [value]="value"></option>
+            }
+          </datalist>
+          @if (fieldError('language'); as message) {
+          <p class="field-error" id="item-language-error">{{ message }}</p>
+          }
+        </div>
+
+        <div class="field full">
+          <label for="item-notes">Observações</label>
+          <textarea
+            id="item-notes"
+            name="notes"
+            rows="3"
+            formControlName="notes"
+            autocomplete="off"
+            [attr.aria-describedby]="fieldError('notes') ? 'item-notes-error' : null"
+          ></textarea>
+          @if (fieldError('notes'); as message) {
+          <p class="field-error" id="item-notes-error">{{ message }}</p>
+          }
+        </div>
+
+        <div class="field full">
+          <span class="label" id="item-image-label">Capa</span>
+          <div
+            class="image-area"
+            aria-labelledby="item-image-label"
+            [attr.aria-describedby]="fieldError('image_path') ? 'item-image-error' : null"
+          >
+            @if (imageUrl(); as src) { @if (imageBroken()) {
+            <p class="muted">Não foi possível exibir a imagem.</p>
+            } @else {
+            <img class="preview" [src]="src" alt="Prévia da capa" (error)="imageBroken.set(true)" />
+            } } @else {
+            <p class="muted">Nenhuma imagem selecionada.</p>
+            }
+            <div class="image-actions">
+              <button type="button" class="secondary" (click)="chooseImage()">
+                Escolher imagem…
+              </button>
+              @if (imagePath() !== null) {
+              <button type="button" class="secondary" (click)="removeImage()">
+                Remover imagem
+              </button>
+              }
+            </div>
+          </div>
+          @if (fieldError('image_path'); as message) {
+          <p class="field-error" id="item-image-error" role="alert">{{ message }}</p>
+          }
+        </div>
+
+        @if (typeValue() === 'livro') {
+        <div class="field">
+          <label for="item-reading-status">Estado</label>
+          <select
+            id="item-reading-status"
+            name="reading_status"
+            formControlName="reading_status"
+            autocomplete="off"
+            [attr.aria-describedby]="
+                fieldError('reading_status') ? 'item-reading-status-error' : null
+              "
+          >
+            <option value="nao_lido">Não lido</option>
+            <option value="lendo">Lendo</option>
+            <option value="lido">Lido</option>
+          </select>
+          @if (fieldError('reading_status'); as message) {
+          <p class="field-error" id="item-reading-status-error">{{ message }}</p>
+          }
+        </div>
+
+        <div class="field full">
+          <app-tag-field
+            label="Autor"
+            inputId="item-author"
+            placeholder="Digite e pressione Enter para adicionar"
+            [suggestions]="suggestions().authors"
+            formControlName="author"
+          ></app-tag-field>
+          @if (fieldError('author'); as message) {
+          <p class="field-error" id="item-author-error">{{ message }}</p>
+          }
+        </div>
+
+        <div class="field">
+          <label for="item-publisher">Editora</label>
+          <input
+            id="item-publisher"
+            name="publisher"
+            type="text"
+            formControlName="publisher"
+            autocomplete="off"
+            list="item-publisher-suggestions"
+            [attr.aria-describedby]="fieldError('publisher') ? 'item-publisher-error' : null"
+          />
+          <datalist id="item-publisher-suggestions">
+            @for (value of suggestions().publishers; track value) {
+            <option [value]="value"></option>
+            }
+          </datalist>
+          @if (fieldError('publisher'); as message) {
+          <p class="field-error" id="item-publisher-error">{{ message }}</p>
+          }
+        </div>
+
+        <div class="field">
+          <label for="item-pages">Páginas</label>
+          <input
+            id="item-pages"
+            name="pages"
+            type="number"
+            min="1"
+            formControlName="pages"
+            autocomplete="off"
+            [attr.aria-describedby]="fieldError('pages') ? 'item-pages-error' : null"
+          />
+          @if (fieldError('pages'); as message) {
+          <p class="field-error" id="item-pages-error">{{ message }}</p>
+          }
+        </div>
+
+        <div class="field">
+          <label for="item-isbn">ISBN</label>
+          <input
+            id="item-isbn"
+            name="isbn"
+            type="text"
+            formControlName="isbn"
+            autocomplete="off"
+            [attr.aria-describedby]="fieldError('isbn') ? 'item-isbn-error' : null"
+          />
+          @if (fieldError('isbn'); as message) {
+          <p class="field-error" id="item-isbn-error">{{ message }}</p>
+          }
+        </div>
+
+        <div class="field">
+          <label for="item-started-on">Início da leitura</label>
+          <input
+            id="item-started-on"
+            name="started_on"
+            type="date"
+            formControlName="started_on"
+            autocomplete="off"
+            [attr.aria-describedby]="fieldError('started_on') ? 'item-started-on-error' : null"
+          />
+          @if (fieldError('started_on'); as message) {
+          <p class="field-error" id="item-started-on-error">{{ message }}</p>
+          }
+        </div>
+
+        <div class="field">
+          <label for="item-finished-on">Fim da leitura</label>
+          <input
+            id="item-finished-on"
+            name="finished_on"
+            type="date"
+            formControlName="finished_on"
+            autocomplete="off"
+            [attr.aria-describedby]="fieldError('finished_on') ? 'item-finished-on-error' : null"
+          />
+          @if (fieldError('finished_on'); as message) {
+          <p class="field-error" id="item-finished-on-error">{{ message }}</p>
+          }
+        </div>
+        } @if (typeValue() === 'filme') {
+        <div class="field">
+          <label for="item-director">Direção</label>
+          <input
+            id="item-director"
+            name="director"
+            type="text"
+            formControlName="director"
+            autocomplete="off"
+            list="item-director-suggestions"
+            [attr.aria-describedby]="fieldError('director') ? 'item-director-error' : null"
+          />
+          <datalist id="item-director-suggestions">
+            @for (value of suggestions().directors; track value) {
+            <option [value]="value"></option>
+            }
+          </datalist>
+          @if (fieldError('director'); as message) {
+          <p class="field-error" id="item-director-error">{{ message }}</p>
+          }
+        </div>
+
+        <div class="field">
+          <label for="item-runtime-min">Duração (min)</label>
+          <input
+            id="item-runtime-min"
+            name="runtime_min"
+            type="number"
+            min="1"
+            formControlName="runtime_min"
+            autocomplete="off"
+            [attr.aria-describedby]="fieldError('runtime_min') ? 'item-runtime-min-error' : null"
+          />
+          @if (fieldError('runtime_min'); as message) {
+          <p class="field-error" id="item-runtime-min-error">{{ message }}</p>
+          }
+        </div>
+
+        <div class="field full">
+          <app-tag-field
+            label="Roteiro"
+            inputId="item-screenplay-by"
+            placeholder="Digite e pressione Enter para adicionar"
+            [suggestions]="suggestions().screenplayBy"
+            formControlName="screenplay_by"
+          ></app-tag-field>
+          @if (fieldError('screenplay_by'); as message) {
+          <p class="field-error" id="item-screenplay-by-error">{{ message }}</p>
+          }
+        </div>
+
+        <div class="field full">
+          <app-tag-field
+            label="Produção"
+            inputId="item-produced-by"
+            placeholder="Digite e pressione Enter para adicionar"
+            [suggestions]="suggestions().producedBy"
+            formControlName="produced_by"
+          ></app-tag-field>
+          @if (fieldError('produced_by'); as message) {
+          <p class="field-error" id="item-produced-by-error">{{ message }}</p>
+          }
+        </div>
+
+        <div class="field full">
+          <app-tag-field
+            label="Distribuição"
+            inputId="item-distributed-by"
+            placeholder="Digite e pressione Enter para adicionar"
+            [suggestions]="suggestions().distributedBy"
+            formControlName="distributed_by"
+          ></app-tag-field>
+          @if (fieldError('distributed_by'); as message) {
+          <p class="field-error" id="item-distributed-by-error">{{ message }}</p>
+          }
+        </div>
+        }
+      </div>
+    </div>
+
+    <footer class="footer">
+      <button type="button" class="secondary" (click)="requestClose()">Cancelar</button>
+      <button type="submit" class="primary" [disabled]="saving()">
+        {{ saving() ? 'Salvando…' : 'Salvar' }}
+      </button>
+    </footer>
+  </form>
+</dialog>

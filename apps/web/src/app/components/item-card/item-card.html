@@ -1,0 +1,21 @@
+<a class="card" [class.small]="size() === 'small'" [routerLink]="['/item', item().id]">
+  <div
+    class="cover"
+    [class.nao-lido]="item().reading_status === 'nao_lido'"
+    [class.lendo]="item().reading_status === 'lendo'"
+  >
+    @if (imageUrl(); as src) { @if (broken()) {
+    <div class="placeholder" aria-hidden="true">{{ initial() }}</div>
+    } @else {
+    <img [src]="src" [alt]="'Capa de ' + item().title" loading="lazy" (error)="broken.set(true)" />
+    } } @else {
+    <div class="placeholder" aria-hidden="true">{{ initial() }}</div>
+    }
+  </div>
+
+  <p class="title">{{ item().title }}</p>
+
+  @if (meta(); as metaText) {
+  <p class="meta">{{ metaText }}</p>
+  }
+</a>

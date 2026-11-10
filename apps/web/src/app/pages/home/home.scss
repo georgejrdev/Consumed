@@ -1,0 +1,46 @@
+.home {
+  display: flex;
+  flex-direction: column;
+  gap: 48px;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.add {
+  height: 24px;
+  padding: 0 12px;
+  color: #14181c;
+  font: inherit;
+  font-size: 14px;
+  line-height: 24px;
+  background: var(--accent);
+  border: 0;
+  cursor: pointer;
+}
+
+.shelf h2 {
+  margin: 0 0 24px;
+  font-size: 24px;
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.state {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 20px;
+}
+
+.state.error {
+  color: var(--text);
+  padding: 12px 16px;
+  border: 2px solid var(--danger);
+}

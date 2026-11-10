@@ -1,0 +1,75 @@
+:host {
+  display: block;
+  min-height: 100vh;
+}
+
+.topbar {
+  height: 72px;
+  background: var(--chrome);
+}
+
+.profile {
+  width: min(1140px, calc(100% - 48px));
+  margin: 0 auto;
+}
+
+.profile-banner {
+  display: flex;
+  align-items: center;
+  height: 250px;
+  padding-left: 48px;
+  background: #8b8b8b;
+}
+
+.profile-circle {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: var(--text-dim);
+}
+
+.navbar {
+  display: flex;
+  align-items: center;
+  gap: 48px;
+  width: min(1140px, calc(100% - 48px));
+  height: 64px;
+  margin: -32px auto 0;
+  padding: 0 24px;
+  background: var(--chrome);
+  border: 2px solid var(--border);
+}
+
+.navbar a {
+  color: var(--text);
+  font-size: 24px;
+  text-decoration: none;
+}
+
+.navbar a.active {
+  color: var(--accent);
+}
+
+.content {
+  width: min(1140px, calc(100% - 48px));
+  margin: 0 auto;
+  padding: 96px 0 64px;
+}
+
+.footer {
+  height: 32px;
+  background: var(--chrome);
+}
+
+.loading {
+  width: min(1140px, calc(100% - 48px));
+  margin: 48px auto;
+}
+
+.error {
+  width: min(1140px, calc(100% - 48px));
+  margin: 48px auto;
+  padding: 12px 16px;
+  border: 2px solid var(--danger);
+  color: var(--text);
+}

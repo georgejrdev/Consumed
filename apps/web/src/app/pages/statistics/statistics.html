@@ -1,0 +1,78 @@
+<section class="statistics">
+  <h1>ESTATÍSTICAS</h1>
+
+  @if (loading()) {
+  <p class="state">Carregando…</p>
+  } @else if (error(); as message) {
+  <p class="state error" role="alert">{{ message }}</p>
+  } @else if (!hasItems()) {
+  <p class="state">Nenhum dado registrado ainda.</p>
+  } @else {
+  <div class="toolbar">
+    <label for="statistics-period">Período</label>
+    <select id="statistics-period" (change)="onYearChange($event)">
+      @for (option of years(); track option) {
+      <option [value]="option" [selected]="option === year()">{{ option }}</option>
+      }
+    </select>
+  </div>
+
+  @if (stats().items === 0) {
+  <p class="state">Nenhum item neste período.</p>
+  }
+
+  <div class="cards">
+    <article class="card">
+      <p class="card-label">Itens</p>
+      <p class="card-value">{{ stats().items }}</p>
+    </article>
+
+    <article class="card">
+      <p class="card-label">Páginas lidas</p>
+      <p class="card-value">{{ stats().pages }}</p>
+    </article>
+
+    <article class="card">
+      <p class="card-label">Nota média</p>
+      <p class="card-value">{{ averageLabel() }}</p>
+    </article>
+
+    <article class="card">
+      <p class="card-label">Editora mais lida</p>
+      <p class="card-value" [class.small]="publisherLong()">{{ stats().topPublisher ?? '—' }}</p>
+    </article>
+  </div>
+
+  <svg
+    class="chart"
+    [attr.viewBox]="'0 0 ' + chartWidth + ' ' + chartHeight"
+    role="img"
+    [attr.aria-label]="chartLabel()"
+  >
+    <line
+      class="axis"
+      [attr.x1]="chartPadding"
+      [attr.y1]="chartBaseline"
+      [attr.x2]="axisEnd"
+      [attr.y2]="chartBaseline"
+    />
+
+    @for (bar of chart(); track bar.month) { @if (bar.items > 0) {
+    <rect
+      class="bar"
+      [attr.x]="bar.x"
+      [attr.y]="bar.y"
+      [attr.width]="bar.width"
+      [attr.height]="bar.height"
+    />
+    <text class="bar-value" [attr.x]="bar.centerX" [attr.y]="bar.valueY" text-anchor="middle">
+      {{ bar.items }}
+    </text>
+    }
+    <text class="bar-label" [attr.x]="bar.centerX" y="245" text-anchor="middle">
+      {{ bar.label }}
+    </text>
+    }
+  </svg>
+  }
+</section>

@@ -1,0 +1,30 @@
+@if (loading()) {
+<p class="loading">Carregando…</p>
+} @else if (vault() === null) { @if (error(); as message) {
+<p class="error" role="alert">{{ message }}</p>
+}
+<app-welcome (chosen)="onChosen($event)" />
+} @else {
+<header class="topbar"></header>
+
+<section class="profile" aria-hidden="true">
+  <div class="profile-banner">
+    <div class="profile-circle"></div>
+  </div>
+</section>
+
+<nav class="navbar" aria-label="Navegação principal">
+  <a routerLink="/home" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }"
+    >HOME</a
+  >
+  <a routerLink="/films" routerLinkActive="active">FILMS</a>
+  <a routerLink="/books" routerLinkActive="active">BOOKS</a>
+  <a routerLink="/statistics" routerLinkActive="active">STATISTICS</a>
+</nav>
+
+<main class="content">
+  <router-outlet />
+</main>
+
+<footer class="footer"></footer>
+}
