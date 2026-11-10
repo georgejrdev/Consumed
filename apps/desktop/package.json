@@ -1,0 +1,58 @@
+{
+  "name": "@consumed/desktop",
+  "version": "0.0.0",
+  "private": true,
+  "type": "commonjs",
+  "main": "dist/main.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run --coverage",
+    "start": "electron .",
+    "package": "electron-builder --linux --publish never"
+  },
+  "dependencies": {
+    "@consumed/contract": "*",
+    "better-sqlite3": "13.0.3"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "9.6.0",
+    "@types/node": "24.19.2",
+    "electron": "45.2.3",
+    "electron-builder": "26.18.1",
+    "typescript": "6.0.3",
+    "vitest": "5.1.0"
+  },
+  "build": {
+    "appId": "dev.georgejr.consumed",
+    "productName": "Consumed",
+    "directories": {
+      "output": "../../release"
+    },
+    "files": [
+      "dist/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "../web/dist/web/browser",
+        "to": "renderer"
+      }
+    ],
+    "asarUnpack": [
+      "**/node_modules/better-sqlite3/**"
+    ],
+    "linux": {
+      "target": [
+        "AppImage"
+      ],
+      "category": "Utility"
+    },
+    "executableName": "consumed"
+  },
+  "description": "Registre filmes e livros que voc\u00ea j\u00e1 consumiu",
+  "author": {
+    "name": "George Junior",
+    "email": "georgejrdev@users.noreply.github.com"
+  },
+  "homepage": "https://github.com/georgejrdev/Consumed"
+}
