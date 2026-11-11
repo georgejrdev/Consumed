@@ -14,7 +14,7 @@ import { pathToFileURL } from 'node:url';
 import type { Item, Result, ValidationError } from '@consumed/contract';
 import { ItemRepository, RepositoryError } from './db/repository';
 import type { ListOptions, VaultInfo } from './types';
-import { ensureVault, isUsableVault } from './vault';
+import { ensureVault, isUsableVault, isWritableDirectory, vaultExists } from './vault';
 
 const DEV_SERVER_URL = 'http://localhost:4200';
 
@@ -92,8 +92,24 @@ function persistVault(dir: string): void {
   writeFileSync(vaultConfigPath(), JSON.stringify({ path: dir }), 'utf-8');
 }
 
-function openVault(dir: string, persist = true): Result<VaultInfo> {
-  if (!isUsableVault(dir)) {
+interface OpenVaultOptions {
+  create?: boolean;
+  persist?: boolean;
+}
+
+function openVault(dir: string, options: OpenVaultOptions = {}): Result<VaultInfo> {
+  const create = options.create ?? true;
+  const persist = options.persist ?? true;
+
+  if (!create) {
+    if (!vaultExists(dir)) {
+      return failure('vault', 'A pasta do cofre salva não existe mais. Escolha outra pasta.');
+    }
+
+    if (!isUsableVault(dir)) {
+      return failure('vault', 'A pasta do cofre salva não permite escrita. Escolha outra pasta.');
+    }
+  } else if (!isWritableDirectory(dir)) {
     return failure('vault', 'A pasta escolhida não permite escrita. Escolha outra pasta.');
   }
 
@@ -476,12 +492,12 @@ void app.whenReady().then(() => {
 
   if (envVault !== undefined && envVault.trim() !== '') {
     // Usado por testes E2E e por quem quer abrir um cofre específico sem passar pelo diálogo.
-    bootResult = openVault(envVault.trim(), false);
+    bootResult = openVault(envVault.trim(), { persist: false });
   } else {
     const storedVault = readStoredVault();
 
     if (storedVault !== null) {
-      bootResult = openVault(storedVault);
+      bootResult = openVault(storedVault, { create: false });
     }
   }
 
