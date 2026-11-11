@@ -90,6 +90,26 @@ describe('validateItemInput', () => {
       },
     );
 
+    it('should accept a negative year as a BC date', () => {
+      const value = expectValid({
+        type: 'livro',
+        title: 'A República',
+        year: -380,
+      });
+
+      expect(value.year).toBe(-380);
+    });
+
+    it.each([0, 4.5, '44'])('should reject year %s when it is not a non-zero integer', (year) => {
+      const errors = expectInvalid({
+        type: 'livro',
+        title: 'Livro',
+        year,
+      });
+
+      expect(errors.map((error) => error.field)).toContain('year');
+    });
+
     it('should reject a title made only of spaces when there is no visible content', () => {
       const errors = expectInvalid({
         type: 'filme',
