@@ -1,9 +1,12 @@
-import { chmodSync, existsSync, mkdirSync, mkdtempSync, rmSync } from 'node:fs';
+import { chmodSync, existsSync, mkdirSync, mkdtempSync, readdirSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { ItemInput } from '@consumed/contract';
+import Database from 'better-sqlite3';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { LATEST_SCHEMA_VERSION } from './migrations';
 import { ItemRepository, RepositoryError } from './repository';
+import { SCHEMA_SQL } from './schema';
 
 const FULL_INPUT: ItemInput = {
   type: 'filme',
@@ -146,6 +149,95 @@ describe('ItemRepository', () => {
       expect(result.ok).toBe(true);
       expect(repo.get(created.value.id)).toBeNull();
       expect(repo.list()).toHaveLength(0);
+    });
+  });
+
+  describe('migrations', () => {
+    const CREATED_AT = '2025-01-01T00:00:00.000Z';
+
+    function insertLegacyItem(db: Database.Database, status?: string): void {
+      if (status === undefined) {
+        db.prepare(
+          `INSERT INTO item (id, type, title, consumed_on, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?)`,
+        ).run('legacy-1', 'livro', 'Livro antigo', '2025-01-01', CREATED_AT, CREATED_AT);
+        return;
+      }
+
+      db.prepare(
+        `INSERT INTO item (
+           id, type, title, consumed_on, reading_status, created_at, updated_at
+         ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      ).run('legacy-1', 'livro', 'Livro antigo', '2025-01-01', status, CREATED_AT, CREATED_AT);
+    }
+
+    it('should mark a new database with the latest schema version', () => {
+      openRepository();
+
+      const db = new Database(join(tempDir, 'consumed.db'));
+
+      try {
+        expect(db.pragma('user_version', { simple: true })).toBe(LATEST_SCHEMA_VERSION);
+      } finally {
+        db.close();
+      }
+    });
+
+    it('should add reading_status and backfill lido for a pre-versioned database', () => {
+      const dbPath = join(tempDir, 'consumed.db');
+      const legacy = new Database(dbPath);
+
+      legacy.exec(SCHEMA_SQL);
+      legacy.exec('ALTER TABLE item DROP COLUMN reading_status');
+      insertLegacyItem(legacy);
+      legacy.pragma('user_version = 0');
+      legacy.close();
+
+      const repo = new ItemRepository(dbPath);
+      repository = repo;
+      repo.migrate();
+
+      expect(repo.get('legacy-1')?.reading_status).toBe('lido');
+      expect(readdirSync(join(tempDir, 'backups'))).toHaveLength(1);
+
+      const db = new Database(dbPath);
+
+      try {
+        expect(db.pragma('user_version', { simple: true })).toBe(LATEST_SCHEMA_VERSION);
+      } finally {
+        db.close();
+      }
+    });
+
+    it('should preserve an existing reading_status when upgrading a pre-versioned database', () => {
+      const dbPath = join(tempDir, 'consumed.db');
+      const legacy = new Database(dbPath);
+
+      legacy.exec(SCHEMA_SQL);
+      insertLegacyItem(legacy, 'lendo');
+      legacy.pragma('user_version = 0');
+      legacy.close();
+
+      const repo = new ItemRepository(dbPath);
+      repository = repo;
+      repo.migrate();
+
+      expect(repo.get('legacy-1')?.reading_status).toBe('lendo');
+    });
+
+    it('should refuse to open a database created by a newer schema', () => {
+      const dbPath = join(tempDir, 'consumed.db');
+      const newer = new Database(dbPath);
+
+      newer.exec(SCHEMA_SQL);
+      newer.pragma('user_version = 999');
+      newer.close();
+
+      const repo = new ItemRepository(dbPath);
+      repository = repo;
+
+      expect(() => repo.migrate()).toThrow(RepositoryError);
+      expect(() => repo.migrate()).toThrow(/versão mais nova/);
     });
   });
 
