@@ -1,9 +1,11 @@
 # INSTRUCTIONS FOR COMMITS AND BRANCHES
 
 ## SCOPE
+
 These rules apply to every change the AI makes in this repository.
 
 ## COMMITS
+
 - All commits must be written in English.
 - A commit must be created for each logical, self-contained change — not for every file edit.
 - Commits should group only changes that are directly related. Otherwise, separate commits must be made. Apply the principle of atomic commits: instead of combining unrelated changes (such as updating a logo and fixing a bug) into a single confusing commit, separate each change into its own commit with a clear message (e.g., `fix: correct cart calculation` and `feat: update logo`).
@@ -39,12 +41,14 @@ These rules apply to every change the AI makes in this repository.
 - Run the project's linters/formatters before committing and use pre-commit hooks when available.
 
 ### INCOMPLETE COMMITS
+
 - `wip:` commits are allowed only on a feature/task branch, never on the integration branch (`main`).
 - WIP commits are a local record of attempts and must be cleaned up before merging.
 - Cleanup is done with an interactive rebase: reword unclear messages, squash commits that belong to the same logical step, and drop debug/accidental commits.
 - The history that reaches `main` must read as a clear sequence of steps — not as a raw trail of attempts.
 
 ## BRANCHES
+
 - Create a new specific branch (feature/task branch) for each problem or feature instead of using a single shared development branch.
 - Every new branch must originate from the up-to-date integration branch (`main`).
 - Branch naming must be clear, indicate its purpose, and strictly use one of the following prefixes followed by a short kebab-case description (and the task ID, if applicable):
@@ -61,6 +65,7 @@ These rules apply to every change the AI makes in this repository.
 - Delete the branch after it is merged.
 
 ## MERGE STRATEGY
+
 - The integration branch is `main`.
 - The default strategy is to merge the task branch preserving its individual commits, so the history shows the step-by-step evolution of the work.
 - Never squash the entire branch into a single commit.
@@ -70,6 +75,7 @@ These rules apply to every change the AI makes in this repository.
 - After merging, delete the branch and update the integration branch.
 
 ## STEP-BY-STEP WORKFLOW
+
 ```bash
 # 1. Update the integration branch
 git switch main
@@ -108,11 +114,13 @@ git branch -d feature/short-description
 git push origin --delete feature/short-description
 git pull --ff-only
 ```
+
 - Never use plain `git push --force`; always use `--force-with-lease`.
 - Never rebase a shared branch or the integration branch.
 - Verify the result with `git log --graph --oneline main`.
 
 ## PULL REQUESTS
+
 - The PR title follows the commit convention.
 - The description must contain:
   - **What** changed.
