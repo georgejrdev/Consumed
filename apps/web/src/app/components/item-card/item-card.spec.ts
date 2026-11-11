@@ -86,6 +86,12 @@ describe('ItemCard', () => {
     expect(host(fixture).querySelector('.meta')?.textContent?.trim()).toBe('1982');
   });
 
+  it('should show a BC year with the a.C. suffix', async () => {
+    const fixture = await setup(makeItem({ year: -44 }));
+
+    expect(host(fixture).querySelector('.meta')?.textContent?.trim()).toBe('44 a.C.');
+  });
+
   it('should show only the rating when the year is missing', async () => {
     const fixture = await setup(makeItem({ rating: 8 }));
 

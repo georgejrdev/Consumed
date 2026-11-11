@@ -23,11 +23,7 @@
     </div>
 
     <div class="info">
-      <h1>
-        {{ data.title }} @if (data.year !== undefined) {
-        <span class="year">({{ data.year }})</span>
-        }
-      </h1>
+      <h1>{{ data.title }}</h1>
 
       @if (metaRows().length > 0) {
       <div class="meta">
@@ -41,7 +37,15 @@
       }
 
       <div class="rating-row">
-        <div class="rating">{{ formatRating(data.rating) }}</div>
+        <div
+          class="rating"
+          [class.rating-low]="ratingTone() === 'low'"
+          [class.rating-medium]="ratingTone() === 'medium'"
+          [class.rating-high]="ratingTone() === 'high'"
+          [class.rating-top]="ratingTone() === 'top'"
+        >
+          {{ formatRating(data.rating) }}
+        </div>
 
         <div class="dates">
           @if (data.type === 'filme') {

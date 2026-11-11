@@ -18,7 +18,10 @@ capas vêm do cofre, o banner de perfil é decorativo e o ícone de filtro é um
 | `--text` | `#ffffff` | texto principal |
 | `--text-muted` | `#c7c7c7` | valores de metadados |
 | `--text-dim` | `#d9d9d9` | placeholder de busca |
-| `--rating` | `#18831c` | bloco da nota |
+| `--rating-low` / `--rating-medium` | `#b3261e` / `#c05621` | nota 0–2 / 3–5 (texto branco) |
+| `--rating-high` | `#ffe681` | nota 6–8 (texto `#14181c`) |
+| `--rating-top` | `#18831c` | nota 9–10 (texto branco) |
+| `--scrollbar-thumb` | `#121518` | thumb da scrollbar (track transparente, 6px) |
 | `--danger` | `#b3261e` | ações destrutivas |
 
 Fonte: `Roboto, system-ui, sans-serif`. Títulos de seção e navegação em maiúsculas.
@@ -53,10 +56,10 @@ Em telas menores que 1140px o conteúdo usa `width: min(1140px, calc(100% - 48px
 ## Detalhe (Filme / Livro)
 
 - Capa 350×518 à esquerda, borda 2px.
-- Título 48px: `Título (ano)`, ano em `--text-muted`.
+- Título 48px; o ano **não** fica no título. Ele aparece como campo `Ano:` nos metadados, logo após `Editora:` (livro) ou `Direção:` (filme), formatado como `1982` ou `44 a.C.` (ano negativo = a.C.).
 - Metadados em 24px, rótulo branco, valor `--text-muted`, uma linha por campo, 36px de altura.
   Campos vazios são omitidos (nem rótulo, nem valor).
-- Bloco da nota: 150×72, fundo `--rating`, número 48px `Roboto Black`, branco.
+- Bloco da nota: 150×72, número 48px `Roboto Black`, cor por faixa — 0–2 `--rating-low`, 3–5 `--rating-medium`, 6–8 `--rating-high` com texto escuro, 9–10 `--rating-top` com texto branco; sem nota usa `--surface` e `--text-muted`.
 - Ao lado da nota: filme mostra `Assistido em:`; livro mostra `Início da leitura:` e `Fim da leitura:` (sem "Lido em"), com datas `dd/mm/aaaa`.
 - Capa e informações ficam lado a lado num wrapper `.main`. Observações (`notes`) ocupam um bloco único de largura total, fundo `--surface` e borda 2px, ABAIXO dessa linha.
 - Estado do livro na capa: `nao_lido` → `filter: grayscale(1)`; `lendo` → `filter: saturate(0.45)`; `lido` → sem filtro. O mesmo vale para o card.
@@ -81,6 +84,7 @@ duas colunas, foco por teclado, `Esc` fecha, botão primário em `--accent` com 
 Campos por tipo:
 
 - Comuns: título, tipo, nota (0–10), idioma, ano, observações, capa.
+- Ano aceita inteiro negativo para datas a.C.; o campo mostra a dica `Use números negativos para anos a.C. Ex.: -44 = 44 a.C.` e rejeita zero.
 - Data de consumo aparece apenas para filme.
 - Livro: estado (não lido / lendo / lido), autores (lista), editora, páginas, ISBN, início e fim de leitura.
 - Filme: direção, duração (min), roteiro (lista), produção (lista), distribuição (lista).

@@ -172,7 +172,8 @@ describe('Detail', () => {
     const text = host(fixture).textContent ?? '';
 
     expect(text).toContain('Blade Runner');
-    expect(text).toContain('(1982)');
+    expect(text).toContain('Ano:');
+    expect(text).toContain('1982');
     expect(text).toContain('Duração:');
     expect(text).toContain('2 h 10 min');
     expect(text).toContain('Direção:');
@@ -189,6 +190,21 @@ describe('Detail', () => {
     expect(text).toContain('01/05/2024');
     expect(text).toContain('Clássico absoluto.');
     expect(host(fixture).querySelector('.rating')?.textContent).toContain('8');
+  });
+
+  it('should render a BC year with the a.C. suffix', async () => {
+    const item = makeItem({
+      type: 'livro',
+      title: 'A República',
+      year: -380,
+      consumed_on: '2024-02-20',
+    });
+    const fixture = await setup(bridgeWith({ get: async () => ({ ok: true, value: item }) }));
+    const text = host(fixture).textContent ?? '';
+
+    expect(text).toContain('Ano:');
+    expect(text).toContain('380 a.C.');
+    expect(text).not.toContain('-380');
   });
 
   it('should render every label of a complete book', async () => {
@@ -210,7 +226,8 @@ describe('Detail', () => {
     const fixture = await setup(bridgeWith({ get: async () => ({ ok: true, value: item }) }));
     const text = host(fixture).textContent ?? '';
 
-    expect(text).toContain('(2019)');
+    expect(text).toContain('Ano:');
+    expect(text).toContain('2019');
     expect(text).toContain('Autor:');
     expect(text).toContain('Autora Completa');
     expect(text).toContain('Editora:');
@@ -252,14 +269,40 @@ describe('Detail', () => {
     expect(host(fixture).querySelector('.rating')?.textContent).toContain('—');
   });
 
-  it('should not show parentheses when the title has no year', async () => {
+  it('should not show a year row when the item has no year', async () => {
     const item = makeItem({ title: 'Sem ano', year: undefined });
     const fixture = await setup(bridgeWith({ get: async () => ({ ok: true, value: item }) }));
-    const heading = host(fixture).querySelector('h1');
 
-    expect(heading?.textContent).toContain('Sem ano');
-    expect(heading?.textContent).not.toContain('(');
-    expect(heading?.textContent).not.toContain(')');
+    expect(host(fixture).querySelector('h1')?.textContent).toContain('Sem ano');
+    expect(host(fixture).textContent).not.toContain('Ano:');
+  });
+
+  it.each([
+    { rating: 0, tone: 'low' },
+    { rating: 2, tone: 'low' },
+    { rating: 3, tone: 'medium' },
+    { rating: 5, tone: 'medium' },
+    { rating: 6, tone: 'high' },
+    { rating: 8, tone: 'high' },
+    { rating: 9, tone: 'top' },
+    { rating: 10, tone: 'top' },
+  ])('should use the $tone tone for rating $rating', async ({ rating, tone }) => {
+    const item = makeItem({ rating });
+    const fixture = await setup(bridgeWith({ get: async () => ({ ok: true, value: item }) }));
+    const block = host(fixture).querySelector('.rating');
+
+    expect(block?.classList.contains(`rating-${tone}`)).toBe(true);
+  });
+
+  it('should use the neutral tone when the item has no rating', async () => {
+    const item = makeItem({ rating: undefined });
+    const fixture = await setup(bridgeWith({ get: async () => ({ ok: true, value: item }) }));
+    const block = host(fixture).querySelector('.rating');
+
+    expect(block?.classList.contains('rating-low')).toBe(false);
+    expect(block?.classList.contains('rating-medium')).toBe(false);
+    expect(block?.classList.contains('rating-high')).toBe(false);
+    expect(block?.classList.contains('rating-top')).toBe(false);
   });
 
   it('should render the cover image and fall back to the placeholder when it fails', async () => {

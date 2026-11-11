@@ -2,7 +2,7 @@ import Database from 'better-sqlite3';
 import { randomUUID } from 'node:crypto';
 import type { Item, ItemInput, MediaType, Result } from '@consumed/contract';
 import { validateItemInput } from '@consumed/contract';
-import { SCHEMA_SQL } from './schema';
+import { applyMigrations, SchemaTooNewError } from './migrations';
 
 export interface ListOptions {
   type?: MediaType;
@@ -257,8 +257,11 @@ function normalizeText(value: string): string {
 
 export class ItemRepository {
   private readonly db: Database.Database;
+  private readonly dbPath: string;
 
   constructor(dbPath: string) {
+    this.dbPath = dbPath;
+
     try {
       this.db = new Database(dbPath);
     } catch (error) {
@@ -272,23 +275,17 @@ export class ItemRepository {
 
   migrate(): void {
     try {
-      this.db.exec(SCHEMA_SQL);
-      this.addMissingColumns();
+      applyMigrations(this.db, this.dbPath);
     } catch (error) {
+      if (error instanceof SchemaTooNewError) {
+        throw new RepositoryError('MIGRATION_FAILED', error.message, error);
+      }
+
       throw new RepositoryError(
         'MIGRATION_FAILED',
         'Não foi possível preparar o banco de dados do cofre.',
         error,
       );
-    }
-  }
-
-  private addMissingColumns(): void {
-    const columns = this.db.prepare('PRAGMA table_info(item)').all() as { name: string }[];
-
-    if (!columns.some((column) => column.name === 'reading_status')) {
-      this.db.exec('ALTER TABLE item ADD COLUMN reading_status TEXT');
-      this.db.exec("UPDATE item SET reading_status = 'lido' WHERE type = 'livro'");
     }
   }
 

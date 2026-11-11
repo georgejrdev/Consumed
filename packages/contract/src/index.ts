@@ -173,6 +173,25 @@ function readOptionalPositiveInteger(
   return value;
 }
 
+function readOptionalYear(raw: RawInput, errors: ValidationError[]): number | undefined {
+  const value = readOptional(raw, 'year');
+
+  if (value === undefined) {
+    return undefined;
+  }
+
+  if (typeof value !== 'number' || !Number.isInteger(value) || value === 0) {
+    errors.push({
+      field: 'year',
+      message:
+        'O ano deve ser um número inteiro diferente de zero; use valores negativos para a.C.',
+    });
+    return undefined;
+  }
+
+  return value;
+}
+
 export function validateItemInput(input: unknown): Result<ItemInput> {
   if (!isRecord(input)) {
     return {
@@ -225,12 +244,7 @@ export function validateItemInput(input: unknown): Result<ItemInput> {
     }
   }
 
-  const year = readOptionalPositiveInteger(
-    input,
-    'year',
-    'O ano deve ser um número inteiro positivo.',
-    errors,
-  );
+  const year = readOptionalYear(input, errors);
 
   const rawRating = readOptional(input, 'rating');
   let rating: number | undefined;

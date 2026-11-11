@@ -74,11 +74,16 @@
             id="item-year"
             name="year"
             type="number"
-            min="1"
+            step="1"
             formControlName="year"
             autocomplete="off"
-            [attr.aria-describedby]="fieldError('year') ? 'item-year-error' : null"
+            [attr.aria-describedby]="
+              fieldError('year') ? 'item-year-error item-year-hint' : 'item-year-hint'
+            "
           />
+          <p class="muted" id="item-year-hint">
+            Use números negativos para anos a.C. Ex.: -44 = 44 a.C.
+          </p>
           @if (fieldError('year'); as message) {
           <p class="field-error" id="item-year-error">{{ message }}</p>
           }

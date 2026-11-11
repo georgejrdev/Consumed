@@ -10,8 +10,13 @@ export type {
   ValidationError,
 } from '@consumed/contract';
 
+export type VersionChange = 'upgrade' | 'downgrade';
+
 export interface VaultInfo {
   path: string;
+  appVersion?: string;
+  previousAppVersion?: string | null;
+  versionChange?: VersionChange | null;
 }
 
 export interface ListOptions {

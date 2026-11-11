@@ -1,4 +1,11 @@
-import { formatDate, formatRating, formatRuntime, mediaLabel, mediaUrl } from './format';
+import {
+  formatDate,
+  formatRating,
+  formatRuntime,
+  formatYear,
+  mediaLabel,
+  mediaUrl,
+} from './format';
 
 describe('formatDate', () => {
   it('should format a date that matches the ISO pattern as dd/mm/yyyy', () => {
@@ -25,6 +32,23 @@ describe('formatRating', () => {
 
   it('should return the rating as text when it is the maximum', () => {
     expect(formatRating(10)).toBe('10');
+  });
+});
+
+describe('formatYear', () => {
+  it('should return a dash when the year is missing or zero', () => {
+    expect(formatYear()).toBe('—');
+    expect(formatYear(0)).toBe('—');
+  });
+
+  it('should show the year as-is when it is after Christ', () => {
+    expect(formatYear(1982)).toBe('1982');
+    expect(formatYear(1)).toBe('1');
+  });
+
+  it('should render negative years as BC dates', () => {
+    expect(formatYear(-44)).toBe('44 a.C.');
+    expect(formatYear(-1)).toBe('1 a.C.');
   });
 });
 

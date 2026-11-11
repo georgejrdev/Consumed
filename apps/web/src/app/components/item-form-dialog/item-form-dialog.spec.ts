@@ -226,6 +226,25 @@ describe('ItemFormDialog', () => {
     expect(saved).toHaveBeenCalledTimes(1);
   });
 
+  it('should send a negative year as a BC date', async () => {
+    const calls: ItemInput[] = [];
+    const bridge = bridgeWith({
+      create: async (input) => {
+        calls.push(input);
+        return { ok: true, value: itemFromInput(input) };
+      },
+    });
+    const fixture = await setup(bridge, null);
+
+    setInputValue(fixture, '#item-title', 'A República');
+    setInputValue(fixture, '#item-consumed-on', '2024-05-01');
+    setInputValue(fixture, '#item-year', '-380');
+    await submit(fixture);
+
+    expect(calls[0]?.year).toBe(-380);
+    expect(host(fixture).textContent).toContain('anos a.C.');
+  });
+
   it('should show an IPC validation error and not emit saved when creation fails', async () => {
     const bridge = bridgeWith({
       create: async () => ({

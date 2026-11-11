@@ -16,6 +16,7 @@ export class App {
   protected readonly vault = signal<VaultInfo | null>(null);
   protected readonly loading = signal(true);
   protected readonly error = signal<string | null>(null);
+  protected readonly versionNotice = signal<string | null>(null);
 
   constructor() {
     void this.loadVault();
@@ -23,7 +24,31 @@ export class App {
 
   protected onChosen(vault: VaultInfo): void {
     this.error.set(null);
+    this.applyVault(vault);
+  }
+
+  protected dismissVersionNotice(): void {
+    this.versionNotice.set(null);
+  }
+
+  private applyVault(vault: VaultInfo | null): void {
     this.vault.set(vault);
+    this.versionNotice.set(vault === null ? null : this.noticeFor(vault));
+  }
+
+  private noticeFor(vault: VaultInfo): string | null {
+    const current = vault.appVersion ?? '';
+    const previous = vault.previousAppVersion ?? null;
+
+    if (vault.versionChange === 'upgrade' && previous !== null) {
+      return `Este cofre foi aberto pela última vez na versão ${previous}. Você está na versão ${current}. Recomendamos fazer backup antes de continuar.`;
+    }
+
+    if (vault.versionChange === 'downgrade' && previous !== null) {
+      return `Este cofre foi usado por uma versão mais nova (${previous}). Atualize o aplicativo para evitar incompatibilidades.`;
+    }
+
+    return null;
   }
 
   private async loadVault(): Promise<void> {
@@ -31,7 +56,7 @@ export class App {
     this.loading.set(false);
 
     if (result.ok) {
-      this.vault.set(result.value);
+      this.applyVault(result.value);
       return;
     }
 

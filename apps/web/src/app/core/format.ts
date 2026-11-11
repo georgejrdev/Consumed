@@ -16,6 +16,14 @@ export function formatRating(rating?: number): string {
   return rating === undefined ? '—' : String(rating);
 }
 
+export function formatYear(year?: number): string {
+  if (year === undefined || year === 0) {
+    return '—';
+  }
+
+  return year < 0 ? `${-year} a.C.` : String(year);
+}
+
 export function formatRuntime(minutes?: number): string {
   if (minutes === undefined || minutes <= 0) {
     return '—';
