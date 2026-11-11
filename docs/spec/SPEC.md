@@ -62,7 +62,7 @@ Uma única tabela `item`, com colunas específicas de cada tipo anuláveis — p
 | `id` | TEXT | UUID, chave primária |
 | `type` | TEXT | `filme` \| `livro` |
 | `title` | TEXT | obrigatório, não vazio |
-| `year` | INTEGER | opcional |
+| `year` | INTEGER | opcional; inteiro diferente de zero, negativo = a.C. (`-44` = 44 a.C.) |
 | `rating` | INTEGER | 0–10, opcional |
 | `consumed_on` | TEXT | data ISO (`YYYY-MM-DD`), NOT NULL; opcional na entrada de livro, derivada de `finished_on` → `started_on` → hoje |
 | `notes` | TEXT | opcional |
@@ -89,7 +89,7 @@ Imagens ficam em `<cofre>/imagens/`. O banco fica em `<cofre>/consumed.db`.
 | ID | Requisito | Prioridade |
 | --- | --- | --- |
 | R1 | Cadastrar filme ou livro consumido: título, tipo, data de consumo (livro: derivada de início/fim) e nota de 0 a 10 | must |
-| R2 | Registrar metadados opcionais por tipo — livro: autores (lista), editora, páginas, idioma, ISBN e estado de leitura; filme: direção, duração, roteiro/produção/distribuição (listas) e idioma. Campos de nomes sugerem valores já usados | must |
+| R2 | Registrar metadados opcionais por tipo — ano (inclusive a.C., como inteiro negativo), livro: autores (lista), editora, páginas, idioma, ISBN e estado de leitura; filme: direção, duração, roteiro/produção/distribuição (listas) e idioma. Campos de nomes sugerem valores já usados | must |
 | R3 | Anexar pôster/capa, com o arquivo copiado para dentro do cofre | must |
 | R4 | Home com os últimos 5 filmes e os últimos 5 livros lidos (estado `lido`) | must |
 | R5 | Grades de filmes e de livros, mais recentes primeiro | must |
@@ -166,6 +166,14 @@ Cada critério é verificável por um teste automatizado, um comando ou uma obse
 - [ ] **AC-31:** O livro tem estado `nao_lido`, `lendo` ou `lido`; a capa fica em grayscale, com saturação reduzida ou colorida, respectivamente, no card e no detalhe; apenas `lido` aparece na Home e nas Estatísticas.
 - [ ] **AC-32:** A capa é servida por `media://vault/<arquivo>` e carrega no app empacotado; caminhos fora de `<cofre>/imagens/` retornam 403/404.
 - [ ] **AC-33:** As observações aparecem num bloco único de largura total, abaixo da linha com capa e informações do detalhe.
+- [ ] **AC-34:** Se o cofre salvo não existir mais (pasta apagada ou sem `consumed.db`), o app não recria a pasta, mantém o `vault.json`, mostra a tela de boas-vindas com erro claro e permite escolher outra pasta.
+
+**Revisão 2026-11-11 (versão, migrações e anos a.C.)**
+- [ ] **AC-35:** O ano aceita inteiro negativo para datas a.C. (`-44` = 44 a.C.), rejeita zero, decimais e texto; o card e o detalhe exibem `N a.C.` sem sinal negativo, e o detalhe posiciona `Ano:` após `Editora:` (livro) ou `Direção:` (filme).
+- [ ] **AC-36:** A nota do detalhe é colorida por faixa: 0–2 vermelho, 3–5 laranja, 6–8 amarelo com texto escuro, 9–10 verde; sem nota usa fundo neutro.
+- [ ] **AC-37:** A scrollbar usa track transparente e thumb de 6px na cor `#121518`, sem alterar o layout.
+- [ ] **AC-38:** Ao abrir um cofre, o app lê e grava `<cofre>/.consumed-meta.json`; se a versão anterior for menor, mostra aviso de upgrade com recomendação de backup; se for maior, mostra aviso de downgrade; o aviso é dispensável e não bloqueia o uso.
+- [ ] **AC-39:** O schema usa `PRAGMA user_version` e uma lista append-only de migrações; antes de migrar, cria backup em `<cofre>/backups/` (mantendo os 3 mais recentes), roda em transação com `quick_check` e recusa abrir schema mais novo que o app.
 
 ## 9. Restrições
 
@@ -227,6 +235,10 @@ Cada critério é verificável por um teste automatizado, um comando ou uma obse
 | D33 | `electron-builder` | Menos configuração para dois alvos |
 | D34 | GitHub Actions (`georgejrdev/Consumed`) | Remote confirmado no repositório |
 | D35 | Linux apenas (AppImage + deb) | Sistema do usuário único; Windows quando houver motivo |
+| D42 | Ano aceita a.C. como inteiro negativo (`-44` = 44 a.C.); zero é inválido | Existem livros publicados antes de Cristo; inteiro negativo preserva ordenação e evita um campo extra |
+| D43 | Nota colorida por faixa no detalhe | Leitura rápida da qualidade: 0–2 vermelho, 3–5 laranja, 6–8 amarelo, 9–10 verde; sem nota fica neutro |
+| D44 | Versão do app registrada em `<cofre>/.consumed-meta.json` | Detecta upgrade/downgrade e recomenda backup antes de abrir um cofre usado por outra versão |
+| D45 | Migrações com `PRAGMA user_version`, backup automático e bloqueio de schema futuro | Evolução segura do SQLite sem perder dados; mantém os 3 backups mais recentes |
 
 **D12 a D18 foram substituídas por D19** (ver Kickoff, Rodada 4). Elas descrevem a hipótese "servidor local em Docker", incompatível com sincronização por arquivo. D11 (Angular) sobrevive parcialmente: Angular permanece como frontend.
 
@@ -268,3 +280,4 @@ Cada critério é verificável por um teste automatizado, um comando ou uma obse
 | 2026-11-10 | Rodada 7: nota 0–10, imagens locais, métricas de estatística, pasta do cofre, busca | Decisões do usuário a partir do Figma |
 | 2026-11-10 | Rodada 8: modal de cadastro, testes, lint, empacotamento, CI, alvo Linux; critérios de aceite escritos | Última rodada de decisões; SPEC pronto para aprovação |
 | 2026-11-10 | **Aprovado pelo usuário** | Fronteira de decisões vazia; pendências declaradas |
+| 2026-11-11 | Rodada 12: ano a.C. (D42), nota colorida (D43), versão no cofre (D44), migrações (D45); AC-35 a AC-39 | Uso real encontrou livros anteriores a Cristo e necessidade de evolução segura do banco |

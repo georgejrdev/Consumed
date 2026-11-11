@@ -541,3 +541,38 @@ Cinco problemas foram observados após a primeira versão funcional: redundânci
 - `.deb` saiu do escopo de empacotamento (o alvo é AppImage); `npm run make` passa a ser alias de `npm run package`.
 - O boot passa a propagar erro de cofre somente leitura via `vault:current` (AC-4).
 - CSP adicionada em `apps/web/src/index.html`.
+
+## Rodada 11 — cofre salvo ausente (2026-11-10)
+
+**Contexto**
+
+O AppImage abria na Home mesmo depois de a pasta do cofre ser apagada. No boot, `isUsableVault` chamava `ensureVault`, que recriava a pasta e um `consumed.db` vazio; com isso o caminho salvo voltava a parecer válido e a tela de boas-vindas nunca aparecia.
+
+**Decisão**
+
+- **D41 — O boot não cria cofre.** `isUsableVault` deixou de ter efeito colateral. O boot exige uma pasta existente com `consumed.db` (`vaultExists`) e, se a validação falhar, mantém o `vault.json`, não recria nada e devolve erro por `vault:current`, levando à tela de boas-vindas com a mensagem "A pasta do cofre salva não existe mais". A criação continua apenas na escolha explícita da pasta (`vault:choose`) e no override `CONSUMED_VAULT_DIR`.
+
+## Rodada 12 — versão, migrações e anos a.C. (2026-11-11)
+
+**Contexto**
+
+O uso real do app revelou três necessidades: registrar obras publicadas antes de Cristo (o campo `year` só aceitava inteiro positivo), evoluir o schema SQLite sem risco de perda de dados e avisar quando um cofre é aberto por uma versão diferente do aplicativo. Na mesma rodada, a nota do detalhe ganhou cores por faixa e a scrollbar foi ajustada ao tema escuro.
+
+**Decisões**
+
+- **D42 — Ano a.C. como inteiro negativo.** `year` aceita qualquer inteiro diferente de zero; `-44` representa 44 a.C. e `0` é inválido. A UI formata o valor como `44 a.C.` no card e no detalhe e mostra a dica `-44 = 44 a.C.` no formulário. O sinal negativo preserva a ordenação numérica e evita um campo adicional (como `year_era`), mantendo o modelo e as consultas atuais.
+- **D43 — Nota colorida por faixa.** O bloco da nota classifica `0–2` como vermelho, `3–5` laranja, `6–8` amarelo (texto escuro) e `9–10` verde. Sem nota, o bloco usa `--surface` e `--text-muted`. A cor é derivada apenas de `rating`, sem novo dado persistido.
+- **D44 — Versão do app no cofre.** O arquivo `<cofre>/.consumed-meta.json` guarda `last_app_version` e `last_opened_at`. A comparação é semver (numérica, com pré-lançamento), não lexicográfica. O boot grava a versão atual e devolve `appVersion`, `previousAppVersion` e `versionChange`; a UI mostra um banner dispensável recomendando backup no upgrade e atualização no downgrade. A gravação também ocorre após criar, editar, excluir e importar imagem, para refletir a última versão que tocou o cofre.
+- **D45 — Migrações versionadas com backup.** O schema usa `PRAGMA user_version` e uma lista append-only em `apps/desktop/src/db/migrations.ts`. Antes de migrar, o app faz checkpoint do WAL e copia o banco para `<cofre>/backups/`, mantendo os 3 arquivos mais recentes. As migrações rodam em transação, seguidas de `quick_check`; um `user_version` maior que o suportado lança `SchemaTooNewError` e impede a abertura. A migração 1 adiciona `reading_status` e faz backfill `lido` apenas quando a coluna não existe, o que a torna idempotente para cofres antigos sem versionamento.
+
+**Ajustes decorrentes**
+
+- O token `--rating` foi substituído pelas variáveis de faixa (`--rating-low`, `--rating-medium`, `--rating-high`, `--rating-top`) e `--scrollbar-thumb`; a scrollbar usa track transparente e thumb de 6px.
+- O ano saiu do `h1` do detalhe e passou a ser uma linha de metadados.
+- A versão do app foi elevada para `0.1.0` em `package.json`, `apps/desktop/package.json` e lockfile.
+- A suíte passou a cobrir anos negativos no contrato, na formatação, no formulário, no card, no detalhe e no E2E, além de upgrade/downgrade, backup e bloqueio de schema futuro.
+
+**Verificação**
+
+- `npm run build`, `npm test` (205 testes), `npm run lint`, `npm run format:check` e `npm run e2e` (5 testes) verdes.
+- Pendente: validação manual do AppImage `0.1.0` após `npm run package`.
