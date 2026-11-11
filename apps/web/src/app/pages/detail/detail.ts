@@ -12,7 +12,7 @@ import { Router } from '@angular/router';
 import { ItemFormDialog } from '../../components/item-form-dialog/item-form-dialog';
 import { Api } from '../../core/api';
 import type { Item } from '../../core/bridge';
-import { formatDate, formatRating, formatRuntime, mediaUrl } from '../../core/format';
+import { formatDate, formatRating, formatRuntime, formatYear, mediaUrl } from '../../core/format';
 
 interface MetaRow {
   label: string;
@@ -83,6 +83,9 @@ export class Detail {
         rows.push({ label: 'Duração:', value: formatRuntime(item.runtime_min) });
       }
       pushText('Direção:', item.director);
+      if (item.year !== undefined && item.year !== 0) {
+        rows.push({ label: 'Ano:', value: formatYear(item.year) });
+      }
       pushList('Roteiro:', item.screenplay_by);
       pushList('Produção:', item.produced_by);
       pushList('Distribuição:', item.distributed_by);
@@ -90,6 +93,9 @@ export class Detail {
     } else {
       pushList('Autor:', item.author);
       pushText('Editora:', item.publisher);
+      if (item.year !== undefined && item.year !== 0) {
+        rows.push({ label: 'Ano:', value: formatYear(item.year) });
+      }
       if (item.pages !== undefined && item.pages > 0) {
         rows.push({ label: 'Páginas:', value: String(item.pages) });
       }
@@ -98,6 +104,24 @@ export class Detail {
     }
 
     return rows;
+  });
+  protected readonly ratingTone = computed(() => {
+    const rating = this.item()?.rating;
+
+    if (rating === undefined) {
+      return 'none';
+    }
+    if (rating <= 2) {
+      return 'low';
+    }
+    if (rating <= 5) {
+      return 'medium';
+    }
+    if (rating <= 8) {
+      return 'high';
+    }
+
+    return 'top';
   });
 
   constructor() {

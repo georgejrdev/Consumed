@@ -1,7 +1,7 @@
 import { Component, computed, input, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import type { Item } from '../../core/bridge';
-import { mediaUrl } from '../../core/format';
+import { formatYear, mediaUrl } from '../../core/format';
 
 @Component({
   selector: 'app-item-card',
@@ -22,7 +22,7 @@ export class ItemCard {
     const parts: string[] = [];
 
     if (this.item().year !== undefined) {
-      parts.push(String(this.item().year));
+      parts.push(formatYear(this.item().year));
     }
     if (this.item().rating !== undefined) {
       parts.push(`Nota ${this.item().rating}`);
