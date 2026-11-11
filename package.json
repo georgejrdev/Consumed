@@ -10,7 +10,7 @@
     "dev": "node scripts/dev.mjs",
     "build": "npm run build --workspace @consumed/contract && npm run build --workspace @consumed/web && npm run build --workspace @consumed/desktop",
     "test": "npm run test --workspace @consumed/contract && npm run test --workspace @consumed/desktop && npm run test --workspace @consumed/web",
-    "test:coverage": "npm run test --workspaces --if-present -- --coverage",
+    "test:coverage": "npm run test",
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
