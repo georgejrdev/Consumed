@@ -7,6 +7,13 @@
 } @else {
 <header class="topbar"></header>
 
+@if (versionNotice(); as notice) {
+<section class="version-notice" role="status">
+  <p>{{ notice }}</p>
+  <button type="button" class="notice-close" (click)="dismissVersionNotice()">Entendi</button>
+</section>
+}
+
 <section class="profile" aria-hidden="true">
   <div class="profile-banner">
     <div class="profile-circle"></div>

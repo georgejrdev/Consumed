@@ -8,6 +8,35 @@
   background: var(--chrome);
 }
 
+.version-notice {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  width: min(1140px, calc(100% - 48px));
+  margin: 24px auto 0;
+  padding: 16px 20px;
+  color: var(--text);
+  background: var(--surface);
+  border: 2px solid var(--accent);
+}
+
+.version-notice p {
+  margin: 0;
+  font-size: 18px;
+  line-height: 1.4;
+}
+
+.notice-close {
+  flex: none;
+  padding: 8px 16px;
+  color: #14181c;
+  background: var(--accent);
+  border: 0;
+  font: inherit;
+  cursor: pointer;
+}
+
 .profile {
   width: min(1140px, calc(100% - 48px));
   margin: 0 auto;

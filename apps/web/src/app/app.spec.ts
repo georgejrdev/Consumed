@@ -83,6 +83,69 @@ describe('App', () => {
     expect(host(fixture).querySelector('app-welcome')).toBeNull();
   });
 
+  it('should show and dismiss an upgrade notice for the vault version', async () => {
+    const fixture = await setup(
+      createBridge({
+        current: async () => ({
+          ok: true,
+          value: {
+            path: '/tmp/cofre',
+            appVersion: '0.1.0',
+            previousAppVersion: '0.0.9',
+            versionChange: 'upgrade',
+          },
+        }),
+      }),
+    );
+    const notice = host(fixture).querySelector('.version-notice');
+
+    expect(notice?.textContent).toContain('0.0.9');
+    expect(notice?.textContent).toContain('0.1.0');
+
+    notice?.querySelector<HTMLButtonElement>('button')?.click();
+    await fixture.whenStable();
+
+    expect(host(fixture).querySelector('.version-notice')).toBeNull();
+  });
+
+  it('should warn when the vault was used by a newer version', async () => {
+    const fixture = await setup(
+      createBridge({
+        current: async () => ({
+          ok: true,
+          value: {
+            path: '/tmp/cofre',
+            appVersion: '0.1.0',
+            previousAppVersion: '0.2.0',
+            versionChange: 'downgrade',
+          },
+        }),
+      }),
+    );
+    const notice = host(fixture).querySelector('.version-notice');
+
+    expect(notice?.textContent).toContain('versão mais nova');
+    expect(notice?.textContent).toContain('0.2.0');
+  });
+
+  it('should not show a version notice when the version did not change', async () => {
+    const fixture = await setup(
+      createBridge({
+        current: async () => ({
+          ok: true,
+          value: {
+            path: '/tmp/cofre',
+            appVersion: '0.1.0',
+            previousAppVersion: '0.1.0',
+            versionChange: null,
+          },
+        }),
+      }),
+    );
+
+    expect(host(fixture).querySelector('.version-notice')).toBeNull();
+  });
+
   it('should switch to the navigation when choosing a vault succeeds', async () => {
     const fixture = await setup(
       createBridge({

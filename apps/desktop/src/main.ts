@@ -15,6 +15,12 @@ import type { Item, Result, ValidationError } from '@consumed/contract';
 import { ItemRepository, RepositoryError } from './db/repository';
 import type { ListOptions, VaultInfo } from './types';
 import { ensureVault, isUsableVault, isWritableDirectory, vaultExists } from './vault';
+import {
+  classifyVersionChange,
+  readVaultUsage,
+  recordVaultUsage,
+  type VersionChange,
+} from './vault-meta';
 
 const DEV_SERVER_URL = 'http://localhost:4200';
 
@@ -27,8 +33,15 @@ const MEDIA_MIME_TYPES: Record<string, string> = {
 };
 
 let currentVaultPath: string | null = null;
+let currentVaultInfo: VaultInfo | null = null;
 let currentRepository: ItemRepository | null = null;
 let bootVaultError: string | null = null;
+
+function touchVaultUsage(): void {
+  if (currentVaultPath !== null) {
+    recordVaultUsage(currentVaultPath, app.getVersion());
+  }
+}
 
 protocol.registerSchemesAsPrivileged([
   {
@@ -113,6 +126,12 @@ function openVault(dir: string, options: OpenVaultOptions = {}): Result<VaultInf
     return failure('vault', 'A pasta escolhida não permite escrita. Escolha outra pasta.');
   }
 
+  const appVersion = app.getVersion();
+  const usage = readVaultUsage(dir);
+  const versionChange: VersionChange | null = classifyVersionChange(
+    appVersion,
+    usage.lastAppVersion,
+  );
   let next: ItemRepository | null = null;
 
   try {
@@ -127,11 +146,18 @@ function openVault(dir: string, options: OpenVaultOptions = {}): Result<VaultInf
     const previous = currentRepository;
     currentRepository = next;
     currentVaultPath = dir;
+    currentVaultInfo = {
+      path: dir,
+      appVersion,
+      previousAppVersion: usage.lastAppVersion,
+      versionChange,
+    };
     bootVaultError = null;
     next = null;
     previous?.close();
+    recordVaultUsage(dir, appVersion);
 
-    return success({ path: dir });
+    return success(currentVaultInfo);
   } catch (error) {
     next?.close();
     return failure('vault', messageOf(error));
@@ -252,7 +278,7 @@ function registerIpcHandlers(): void {
   });
 
   ipcMain.handle('vault:current', (): Result<VaultInfo | null> => {
-    if (currentVaultPath === null) {
+    if (currentVaultInfo === null) {
       if (bootVaultError !== null) {
         return failure('vault', bootVaultError);
       }
@@ -260,7 +286,7 @@ function registerIpcHandlers(): void {
       return success(null);
     }
 
-    return success({ path: currentVaultPath });
+    return success(currentVaultInfo);
   });
 
   ipcMain.handle('items:list', (_event, query: unknown): Result<Item[]> => {
@@ -303,7 +329,13 @@ function registerIpcHandlers(): void {
     }
 
     try {
-      return repository.value.create(input);
+      const result = repository.value.create(input);
+
+      if (result.ok) {
+        touchVaultUsage();
+      }
+
+      return result;
     } catch (error) {
       return failure('database', messageOf(error));
     }
@@ -325,13 +357,16 @@ function registerIpcHandlers(): void {
     try {
       const result = repository.value.update(id, input);
 
-      if (
-        result.ok &&
-        currentVaultPath !== null &&
-        previousImage !== undefined &&
-        previousImage !== result.value.image_path
-      ) {
-        removeVaultImage(currentVaultPath, previousImage);
+      if (result.ok) {
+        if (
+          currentVaultPath !== null &&
+          previousImage !== undefined &&
+          previousImage !== result.value.image_path
+        ) {
+          removeVaultImage(currentVaultPath, previousImage);
+        }
+
+        touchVaultUsage();
       }
 
       return result;
@@ -374,8 +409,12 @@ function registerIpcHandlers(): void {
     try {
       const result = repository.value.delete(id);
 
-      if (result.ok && currentVaultPath !== null) {
-        removeVaultImage(currentVaultPath, existing?.image_path);
+      if (result.ok) {
+        if (currentVaultPath !== null) {
+          removeVaultImage(currentVaultPath, existing?.image_path);
+        }
+
+        touchVaultUsage();
       }
 
       return result;
@@ -418,6 +457,7 @@ function registerIpcHandlers(): void {
 
       const fileName = `${randomUUID()}${extname(source).toLowerCase()}`;
       copyFileSync(source, join(imagensDir, fileName));
+      touchVaultUsage();
 
       return success({ path: join('imagens', fileName) });
     } catch (error) {
