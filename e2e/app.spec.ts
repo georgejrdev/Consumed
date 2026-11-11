@@ -1,11 +1,16 @@
 import { test, expect, _electron as electron } from '@playwright/test';
 import type { ElectronApplication } from '@playwright/test';
-import { mkdtempSync, rmSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 
 const repoRoot = resolve(__dirname, '..');
 const rendererDir = join(repoRoot, 'apps/web/dist/web/browser');
+const appVersion = (
+  JSON.parse(readFileSync(join(repoRoot, 'apps/desktop/package.json'), 'utf-8')) as {
+    version: string;
+  }
+).version;
 
 const apps: ElectronApplication[] = [];
 const tempDirs: string[] = [];
@@ -16,8 +21,27 @@ function tempDir(prefix: string): string {
   return dir;
 }
 
-async function launch(options: { vault?: string } = {}): Promise<ElectronApplication> {
+async function launch(
+  options: { vault?: string; storedVault?: string; storedVersion?: string } = {},
+): Promise<ElectronApplication> {
   const userData = tempDir('consumed-userdata-');
+
+  if (options.storedVault !== undefined) {
+    writeFileSync(
+      join(userData, 'vault.json'),
+      JSON.stringify({ path: options.storedVault }),
+      'utf-8',
+    );
+  }
+
+  if (options.vault !== undefined && options.storedVersion !== undefined) {
+    writeFileSync(
+      join(options.vault, '.consumed-meta.json'),
+      JSON.stringify({ last_app_version: options.storedVersion }),
+      'utf-8',
+    );
+  }
+
   const app = await electron.launch({
     args: ['apps/desktop', '--no-sandbox', `--user-data-dir=${userData}`],
     cwd: repoRoot,
@@ -48,6 +72,52 @@ test('primeira execução pede a pasta do cofre', async () => {
 
   await expect(window.getByRole('button', { name: 'Escolher pasta do cofre' })).toBeVisible();
   await expect(window.getByRole('heading', { name: 'Bem-vindo ao Consumed' })).toBeVisible();
+});
+
+test('cofre salvo apagado pede uma nova pasta sem recriar a antiga', async () => {
+  const deleted = join(tempDir('consumed-gone-'), 'cofre-apagado');
+  const app = await launch({ storedVault: deleted });
+  const window = await app.firstWindow();
+
+  await expect(window.getByRole('button', { name: 'Escolher pasta do cofre' })).toBeVisible();
+  await expect(window.getByRole('alert')).toContainText('não existe mais');
+  expect(existsSync(deleted)).toBe(false);
+});
+
+test('avisa quando o cofre foi usado por uma versão anterior', async () => {
+  const vault = tempDir('consumed-vault-');
+  const app = await launch({ vault, storedVersion: '0.0.0' });
+  const window = await app.firstWindow();
+  const notice = window.locator('.version-notice');
+
+  await expect(notice).toBeVisible();
+  await expect(notice).toContainText('0.0.0');
+  await expect(notice).toContainText(appVersion);
+
+  await window.getByRole('button', { name: 'Entendi' }).click();
+  await expect(notice).toHaveCount(0);
+});
+
+test('cadastra um livro com ano a.C. e exibe o sufixo no card e no detalhe', async () => {
+  const vault = tempDir('consumed-vault-');
+  const app = await launch({ vault });
+  const window = await app.firstWindow();
+
+  await window.getByRole('button', { name: '+ Adicionar' }).click();
+
+  const dialog = window.getByRole('dialog');
+  await dialog.getByLabel('Tipo').selectOption('livro');
+  await dialog.getByLabel('Título').fill('A República');
+  await dialog.getByLabel('Ano').fill('-380');
+
+  await dialog.getByRole('button', { name: 'Salvar' }).click();
+  await expect(dialog).toBeHidden();
+
+  await expect(window.locator('app-item-card').filter({ hasText: '380 a.C.' })).toBeVisible();
+
+  await window.locator('app-item-card').filter({ hasText: 'A República' }).click();
+
+  await expect(window.getByText('380 a.C.')).toBeVisible();
 });
 
 test('cadastra, abre, edita e exclui um livro pelo aplicativo', async () => {
